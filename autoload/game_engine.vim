@@ -1,15 +1,21 @@
 
 scriptencoding utf-8
 
+" let s:V = vital#of('vital')
+let s:V = vital#of('game_engine.vim')
+let s:List = s:V.import('Data.List')
+let s:Random = s:V.import('Random.Xor128')
+call s:Random.srand()
+
 function! game_engine#version()
   return '0.0'
 endfunction
 function! game_engine#auto_funcref()
   try
-   call b:session._.auto_funcref()
-   call feedkeys(mode() is# 'i' ? "\<C-g>\<ESC>" : "g\<ESC>", 'n')
- catch '.*'
- endtry
+    call b:session._.auto_funcref()
+    call feedkeys(mode() is# 'i' ? "\<C-g>\<ESC>" : "g\<ESC>", 'n')
+  catch '.*'
+  endtry
 endfunction
 function! game_engine#start_game(game_title, auto_funcref)
   tabnew
@@ -58,30 +64,38 @@ function! game_engine#exit_game()
     bdelete!
   endif
 endfunction
+function! game_engine#rand(n)
+  return abs(s:Random.rand()) % a:n
+endfunction
+function! game_engine#scale2d(data, scale_dict, default)
+  let lines = []
+  for row in a:data
+    let scaled_row = map(deepcopy(row),
+          \ 's:List.zip(get(a:scale_dict, v:val, a:default))')
+    for lnum in range(0, len(scaled_row[0]) - 1)
+      let line = []
+      for idx in range(0, len(scaled_row) - 1)
+        let line += scaled_row[idx][lnum][0]
+      endfor
+      let lines += [line]
+    endfor
+  endfor
+  return lines
+endfunction
 
 function! s:get_session(game_title, auto_funcref)
   let session = {}
-
   let session._ = {}
-  let session._.V = vital#of('game_engine.vim')
-  let session._.Random = session._.V.import('Random.Xor128')
-  let session._.List = session._.V.import('Data.List')
 
-  call session._.Random.srand()
+  let session._.V = s:V
+  let session._.Random = s:Random
+  let session._.List = s:List
 
-  let session._.unix_p = has('unix') && ! has('mac')
-  let session._.windows_p = has('win95') || has('win16') || has('win32') || has('win64')
-  let session._.cygwin_p = has('win32unix')
-  let session._.mac_p = ! session._.windows_p
-        \ && ! session._.cygwin_p
-        \ && (
-        \       has('mac')
-        \    || has('macunix')
-        \    || has('gui_macvim')
-        \    || (  ! executable('xdg-open')
-        \       && system('uname') =~? '^darwin'
-        \       )
-        \    )
+  let session._.unix_p = s:is_unix()
+  let session._.windows_p = s:is_windows()
+  let session._.cygwin_p = s:is_cygwin()
+  let session._.mac_p = s:is_mac()
+
   let session._.backup = {
         \   'guifont' : &guifont,
         \   'spell' : &spell,
@@ -101,5 +115,27 @@ function! s:get_session(game_title, auto_funcref)
   endfunction
 
   return session
+endfunction
+
+function! s:is_unix()
+  return has('unix') && ! has('mac')
+endfunction
+function! s:is_windows()
+  return has('win95') || has('win16') || has('win32') || has('win64')
+endfunction
+function! s:is_cygwin()
+  return has('win32unix')
+endfunction
+function! s:is_mac()
+  return ! s:is_windows()
+        \ && ! s:is_cygwin()
+        \ && (
+        \       has('mac')
+        \    || has('macunix')
+        \    || has('gui_macvim')
+        \    || (  ! executable('xdg-open')
+        \       && system('uname') =~? '^darwin'
+        \       )
+        \    )
 endfunction
 
