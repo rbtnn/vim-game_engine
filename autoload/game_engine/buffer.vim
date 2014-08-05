@@ -27,16 +27,16 @@ function! game_engine#buffer#uniq_open(bname,lines,mode)
   endif
 
   if a:mode is# 'w'
-    " let lnum = 1
-    " for line in a:lines
-    "   if line isnot getline(lnum)
-    "     call setline(lnum, line)
-    "   endif
-    "   let lnum += 1
-    " endfor
-    silent % delete _
-    silent put=a:lines
-    silent 1 delete _
+    let lnum = 1
+    for line in a:lines
+      if line isnot getline(lnum)
+        call setline(lnum, line)
+      endif
+      let lnum += 1
+    endfor
+    " silent % delete _
+    " silent put=a:lines
+    " silent 1 delete _
   elseif a:mode is# 'a'
     call append('$',a:lines)
   endif
