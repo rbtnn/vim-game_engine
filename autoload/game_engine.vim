@@ -4,9 +4,15 @@ scriptencoding utf-8
 let s:V = vital#of('game_engine.vim')
 let s:List = s:V.import('Data.List')
 let s:Random = s:V.import('Random.Xor128')
+let s:game_engine = {
+      \  'save_data' : {},
+      \ }
 call s:Random.srand()
 
 function! game_engine#version()
+  if v:version < 704
+    throw '[game_engine.vim] version 7.4 or higher is required to play a game.'
+  endif
   return '0.0'
 endfunction
 function! game_engine#auto_funcref()
@@ -16,6 +22,7 @@ function! game_engine#auto_funcref()
   catch '.*'
   endtry
 endfunction
+
 function! game_engine#start_game(game_title, auto_funcref)
   tabnew
   call game_engine#buffer#uniq_open(a:game_title, [], "w")
@@ -66,6 +73,27 @@ function! game_engine#exit_game()
     bdelete!
   endif
 endfunction
+function! game_engine#save_game(game_title, key)
+  if &filetype is# "game_engine"
+    if b:session._.game_title is a:game_title
+      if !has_key(s:game_engine.save_data, a:game_title)
+        let s:game_engine.save_data[(a:game_title)] = {}
+      endif
+      let s:game_engine.save_data[(a:game_title)][(a:key)] = deepcopy(b:session)
+    endif
+  endif
+endfunction
+function! game_engine#load_game(game_title, key)
+  if &filetype is# "game_engine"
+    if b:session._.game_title is a:game_title
+      if !has_key(s:game_engine.save_data, a:game_title)
+        let s:game_engine.save_data[(a:game_title)] = {}
+      endif
+      let b:session = deepcopy(get(s:game_engine.save_data[(a:game_title)], a:key, {}))
+    endif
+  endif
+endfunction
+
 function! game_engine#rand(n)
   return abs(s:Random.rand()) % a:n
 endfunction
@@ -83,6 +111,30 @@ function! game_engine#scale2d(data, scale_dict, default)
     endfor
   endfor
   return lines
+endfunction
+function! game_engine#syntax()
+  return  {
+        \   'red' : { 'gui' : '#ff0000', 'cterm' : 'red', 'text' : '@R' },
+        \   'green' : { 'gui' : '#00ff00', 'cterm' : 'green', 'text' : '@G' },
+        \   'blue' : { 'gui' : '#0000ff', 'cterm' : 'blue', 'text' : '@B' },
+        \   'yellow' : { 'gui' : '#ffff00', 'cterm' : 'yellow', 'text' : '@Y' },
+        \   'purple' : { 'gui' : '#8B008B', 'cterm' : 'DarkMagenta', 'text' : '@P' },
+        \   'brown' : { 'gui' : '#965042', 'cterm' : 'DarkRed', 'text' : '@b' },
+        \   'white' : { 'gui' : '#ffffff', 'cterm' : 'white', 'text' : '@w' },
+        \   'black' : { 'gui' : '#000000', 'cterm' : 'black', 'text' : '@l' },
+        \   'gray' : { 'gui' : '#333333', 'cterm' : 'gray', 'text' : '@g' },
+        \ }
+endfunction
+function! game_engine#define_syntax(name, dict)
+  execute printf('highlight! game_engine%sHi guifg=%s guibg=%s ctermfg=%s ctermbg=%s',
+        \   a:name,
+        \   a:dict['gui'], a:dict['gui'],
+        \   a:dict['cterm'], a:dict['cterm']
+        \   )
+  execute printf('syntax match game_engine%s  "%s"',
+        \   a:name, a:dict['text'])
+  execute printf('highlight! default link game_engine%s game_engine%sHi',
+        \ a:name, a:name)
 endfunction
 
 function! s:get_session(game_title, auto_funcref)
