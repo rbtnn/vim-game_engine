@@ -97,6 +97,23 @@ endfunction
 function! game_engine#rand(n)
   return abs(s:Random.rand()) % a:n
 endfunction
+
+" echo game_engine#scale2d([
+"       \[1,2],
+"       \[3,4]],
+"       \ {
+"       \  '1' : [[1,1,1],
+"       \         [1,1,1],
+"       \         [1,1,1]],
+"       \  '2' : [[4,4,4],
+"       \         [4,4,4],
+"       \         [4,4,4]],
+"       \  '4' : [[16,16,16],
+"       \         [16,16,16],
+"       \         [16,16,16]],
+"       \ }, [[0,0,0],
+"       \     [0,0,0],
+"       \     [0,0,0]])
 function! game_engine#scale2d(data, scale_dict, default)
   let lines = []
   for row in a:data
@@ -112,18 +129,42 @@ function! game_engine#scale2d(data, scale_dict, default)
   endfor
   return lines
 endfunction
-function! game_engine#syntax()
-  return  {
-        \   'red' : { 'gui' : '#ff0000', 'cterm' : 'red', 'text' : '@R' },
-        \   'green' : { 'gui' : '#00ff00', 'cterm' : 'green', 'text' : '@G' },
-        \   'blue' : { 'gui' : '#0000ff', 'cterm' : 'blue', 'text' : '@B' },
-        \   'yellow' : { 'gui' : '#ffff00', 'cterm' : 'yellow', 'text' : '@Y' },
-        \   'purple' : { 'gui' : '#8B008B', 'cterm' : 'DarkMagenta', 'text' : '@P' },
-        \   'brown' : { 'gui' : '#965042', 'cterm' : 'DarkRed', 'text' : '@b' },
-        \   'white' : { 'gui' : '#ffffff', 'cterm' : 'white', 'text' : '@w' },
-        \   'black' : { 'gui' : '#000000', 'cterm' : 'black', 'text' : '@l' },
-        \   'gray' : { 'gui' : '#333333', 'cterm' : 'gray', 'text' : '@g' },
-        \ }
+
+function! game_engine#syntax(...)
+  let syntax_dict = {}
+
+  let syntax_dict['_ff0000'] = { 'gui' : '#ff0000', 'cterm' : 'Red' }
+  let syntax_dict['_00ff00'] = { 'gui' : '#00ff00', 'cterm' : 'Green' }
+  let syntax_dict['_0000ff'] = { 'gui' : '#0000ff', 'cterm' : 'Blue' }
+  let syntax_dict['_ffff00'] = { 'gui' : '#ffff00', 'cterm' : 'Yellow' }
+  let syntax_dict['_8B008B'] = { 'gui' : '#8B008B', 'cterm' : 'DarkMagenta' }
+  let syntax_dict['_965042'] = { 'gui' : '#965042', 'cterm' : 'DarkRed' }
+  let syntax_dict['_ffffff'] = { 'gui' : '#ffffff', 'cterm' : 'White' }
+  let syntax_dict['_000000'] = { 'gui' : '#000000', 'cterm' : 'Black' }
+  let syntax_dict['_333333'] = { 'gui' : '#333333', 'cterm' : 'Gray' }
+  let syntax_dict['_ff00ff'] = { 'gui' : '#ff00ff', 'cterm' : 'Magenta' }
+  for key in keys(deepcopy(syntax_dict))
+    let syntax_dict[syntax_dict[key].cterm] = deepcopy(syntax_dict[key])
+  endfor
+
+  for arg_dict in a:000
+    let key = tr(arg_dict.gui, '#', '_')
+    if !has_key(syntax_dict, key)
+      let syntax_dict[key] = arg_dict
+    endif
+  endfor
+
+  let ts =
+  \   map(range(0, 9), 'nr2char(0x30 + v:val)')
+  \ + map(range(1, 26), 'nr2char(0x40 + v:val)')
+  \ + map(range(1, 26), 'nr2char(0x60 + v:val)')
+  let idx = 0
+  for key in keys(syntax_dict)
+    let syntax_dict[key].text = '@' . ts[idx]
+    let idx += 1
+  endfor
+
+  return syntax_dict
 endfunction
 function! game_engine#define_syntax(name, dict)
   execute printf('highlight! game_engine%sHi guifg=%s guibg=%s ctermfg=%s ctermbg=%s',
