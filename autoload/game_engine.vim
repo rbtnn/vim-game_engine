@@ -10,8 +10,8 @@ let s:game_engine = {
 call s:Random.srand()
 
 function! game_engine#version()
-  if v:version < 704
-    throw '[game_engine.vim] version 7.4 or higher is required to play a game.'
+  if v:version < 704 || !executable('xxd')
+    throw '[game_engine.vim] game_engine.vim requires version 7.4 or higher and to execute xxd.'
   endif
   return '0.0'
 endfunction
@@ -24,6 +24,8 @@ function! game_engine#auto_funcref()
 endfunction
 
 function! game_engine#start_game(game_title, auto_funcref)
+  call game_engine#version()
+
   tabnew
   call game_engine#buffer#uniq_open(a:game_title, [], "w")
   execute printf("%dwincmd w", game_engine#buffer#winnr(a:game_title))
