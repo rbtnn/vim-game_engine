@@ -1,7 +1,7 @@
 
-# game\_engine.vim
+# vim-game\_engine
 
-## [rbtnn/puyo.vim](https://github.com/rbtnn/puyo.vim)
-## [rbtnn/mario.vim](https://github.com/rbtnn/mario.vim)
+## [rbtnn/vim-puyo](https://github.com/rbtnn/vim-puyo)
+## [rbtnn/vim-mario](https://github.com/rbtnn/vim-mario)
 
 
